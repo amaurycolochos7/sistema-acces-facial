@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Search, Filter, Edit2, Trash2, UserPlus, GraduationCap, X } from 'lucide-react';
+import { Plus, Search, Filter, Edit2, Trash2, UserPlus, GraduationCap, X, Camera } from 'lucide-react';
+import Link from 'next/link';
 
 interface Career {
   id: string;
@@ -18,6 +19,7 @@ interface User {
   tutorPhone: string | null;
   role: 'STUDENT' | 'TEACHER';
   isActive: boolean;
+  hasFaceRegistered: boolean;
   career: Career | null;
 }
 
@@ -161,14 +163,15 @@ export default function UsersPage() {
               <th className="text-left px-4 py-3 text-gray-500 font-medium">Correo</th>
               <th className="text-left px-4 py-3 text-gray-500 font-medium">Rol</th>
               <th className="text-left px-4 py-3 text-gray-500 font-medium">Carrera</th>
+              <th className="text-left px-4 py-3 text-gray-500 font-medium">Rostro</th>
               <th className="text-right px-4 py-3 text-gray-500 font-medium">Acciones</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={6} className="py-12 text-center text-gray-400">Cargando...</td></tr>
+              <tr><td colSpan={7} className="py-12 text-center text-gray-400">Cargando...</td></tr>
             ) : users.length === 0 ? (
-              <tr><td colSpan={6} className="py-12 text-center text-gray-400">No hay usuarios registrados</td></tr>
+              <tr><td colSpan={7} className="py-12 text-center text-gray-400">No hay usuarios registrados</td></tr>
             ) : (
               users.map((user) => (
                 <tr key={user.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
@@ -184,7 +187,18 @@ export default function UsersPage() {
                   </td>
                   <td className="px-4 py-3 text-gray-600">{user.career?.code || '—'}</td>
                   <td className="px-4 py-3">
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                      user.hasFaceRegistered ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'
+                    }`}>
+                      {user.hasFaceRegistered ? '✅ Sí' : '❌ No'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">
+                      <Link href={`/admin/users/${user.id}/enroll`}
+                        className="p-1.5 rounded-md hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors" title="Registro facial">
+                        <Camera className="w-3.5 h-3.5" />
+                      </Link>
                       <button onClick={() => handleEdit(user)}
                         className="p-1.5 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors">
                         <Edit2 className="w-3.5 h-3.5" />
