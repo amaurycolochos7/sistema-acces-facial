@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Determine punctuality for entries
-  let punctuality: string | null = null;
+  let punctuality: 'ON_TIME' | 'LATE' | 'ABSENT' | null = null;
   if (type === 'ENTRY') {
     // Get current schedule config
     const now = new Date();
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
   const log = await prisma.accessLog.create({
     data: {
       userId,
-      type,
+      type: type as 'ENTRY' | 'EXIT',
       confidence: confidence || null,
       punctuality,
       exitReasonId: type === 'EXIT' ? (exitReasonId || null) : null,

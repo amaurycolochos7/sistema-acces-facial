@@ -119,7 +119,7 @@ export default function AccessLogsPage() {
                 </td>
                 <td className="px-4 py-3 text-gray-500 tabular-nums">{log.confidence ? `${(log.confidence * 100).toFixed(0)}%` : '—'}</td>
                 <td className="px-4 py-3">
-                  {log.isOfflineSync && <WifiOff className="w-3.5 h-3.5 text-amber-500" title="Sincronizado offline" />}
+                  {log.isOfflineSync && <span title="Sincronizado offline"><WifiOff className="w-3.5 h-3.5 text-amber-500" /></span>}
                 </td>
               </tr>
             ))}

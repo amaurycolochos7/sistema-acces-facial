@@ -73,13 +73,13 @@ export async function GET(req: NextRequest) {
 
         // Calculate effective hours by pairing entries and exits
         let dayMinutes = 0;
-        const entries = dayLogs.filter(l => l.type === 'ENTRY');
-        const exits = dayLogs.filter(l => l.type === 'EXIT');
+        const entries = dayLogs.filter((l: typeof logs[0]) => l.type === 'ENTRY');
+        const exits = dayLogs.filter((l: typeof logs[0]) => l.type === 'EXIT');
 
         for (let i = 0; i < entries.length; i++) {
           const entry = entries[i];
           // Find the next exit after this entry
-          const matchingExit = exits.find(e => e.timestamp > entry.timestamp);
+          const matchingExit = exits.find((e: typeof logs[0]) => e.timestamp > entry.timestamp);
           if (matchingExit) {
             const diff = (matchingExit.timestamp.getTime() - entry.timestamp.getTime()) / 60000;
             dayMinutes += diff;

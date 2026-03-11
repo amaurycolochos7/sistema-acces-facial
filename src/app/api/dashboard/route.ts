@@ -38,8 +38,8 @@ export async function GET() {
   const hourlyData: { hour: string; entries: number; exits: number }[] = [];
   for (let h = 6; h <= 22; h++) {
     const hourStr = `${String(h).padStart(2, '0')}:00`;
-    const entries = hourlyLogs.filter(l => l.type === 'ENTRY' && l.timestamp.getHours() === h).length;
-    const exits = hourlyLogs.filter(l => l.type === 'EXIT' && l.timestamp.getHours() === h).length;
+    const entries = hourlyLogs.filter((l: { type: string; timestamp: Date }) => l.type === 'ENTRY' && l.timestamp.getHours() === h).length;
+    const exits = hourlyLogs.filter((l: { type: string; timestamp: Date }) => l.type === 'EXIT' && l.timestamp.getHours() === h).length;
     hourlyData.push({ hour: hourStr, entries, exits });
   }
 
@@ -51,7 +51,7 @@ export async function GET() {
   ]);
 
   // Top temporary exits today
-  const topExits: Array<{ userId: string; _count: { id: number } }> = await prisma.accessLog.groupBy({
+  const topExits = await prisma.accessLog.groupBy({
     by: ['userId'],
     where: { type: 'EXIT', timestamp: { gte: startOfDay, lte: endOfDay } },
     _count: { id: true },
@@ -60,7 +60,7 @@ export async function GET() {
   });
 
   const topExitUsers = await Promise.all(
-    topExits.map(async (e) => {
+    topExits.map(async (e: typeof topExits[0]) => {
       const user = await prisma.user.findUnique({ where: { id: e.userId }, include: { career: true } });
       return {
         name: user?.fullName || 'Desconocido',
@@ -100,7 +100,7 @@ export async function GET() {
     hourlyData,
     punctuality: { onTime, late, absent },
     topExitUsers,
-    recentLogs: recentLogs.map(l => ({
+    recentLogs: recentLogs.map((l: typeof recentLogs[0]) => ({
       id: l.id,
       type: l.type,
       timestamp: l.timestamp,
