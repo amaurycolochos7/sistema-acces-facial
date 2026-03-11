@@ -1,0 +1,34 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://accessuser:accesspass@db:5432/access_control
+      - NEXTAUTH_SECRET=super-secret-change-in-production
+      - NEXTAUTH_URL=https://acceso.tecnm-vc.edu.mx
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      - db
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      - POSTGRES_USER=accessuser
+      - POSTGRES_PASSWORD=accesspass
+      - POSTGRES_DB=access_control
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  uploads:
+  pgdata:

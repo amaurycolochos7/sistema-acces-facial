@@ -1,0 +1,141 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [vector]
+}
+
+enum UserRole {
+  STUDENT
+  TEACHER
+}
+
+enum AccessType {
+  ENTRY
+  EXIT
+}
+
+enum Punctuality {
+  ON_TIME
+  LATE
+  ABSENT
+}
+
+enum AdminLevel {
+  SUPER_ADMIN
+  ADMIN
+  VIEWER
+}
+
+enum ExitCategory {
+  DEFINITIVE
+  TEMPORARY
+  MEDICAL
+  ADMINISTRATIVE
+}
+
+model User {
+  id             String           @id @default(uuid())
+  controlNumber  String           @unique
+  fullName       String
+  email          String
+  phone          String
+  tutorPhone     String?
+  photoUrl       String?
+  role           UserRole
+  careerId       String?
+  career         Career?          @relation(fields: [careerId], references: [id])
+  isActive       Boolean          @default(true)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  faceDescriptors FaceDescriptor[]
+  accessLogs     AccessLog[]
+
+  @@index([controlNumber])
+  @@index([role])
+}
+
+model FaceDescriptor {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  descriptor      Unsupported("vector(128)")
+  descriptorIndex Int
+  createdAt       DateTime @default(now())
+
+  @@index([userId])
+}
+
+model AccessLog {
+  id            String       @id @default(uuid())
+  userId        String
+  user          User         @relation(fields: [userId], references: [id])
+  type          AccessType
+  exitReasonId  String?
+  exitReason    ExitReason?  @relation(fields: [exitReasonId], references: [id])
+  exitNote      String?
+  timestamp     DateTime     @default(now())
+  confidence    Float?
+  punctuality   Punctuality?
+  isOfflineSync Boolean      @default(false)
+
+  @@index([userId])
+  @@index([timestamp])
+  @@index([type])
+}
+
+model ExitReason {
+  id        String       @id @default(uuid())
+  name      String
+  category  ExitCategory
+  icon      String       @default("🏠")
+  sortOrder Int          @default(0)
+  isDefault Boolean      @default(false)
+  isActive  Boolean      @default(true)
+  logs      AccessLog[]
+}
+
+model Career {
+  id    String @id @default(uuid())
+  name  String
+  code  String @unique
+  users User[]
+}
+
+model ScheduleConfig {
+  id            String         @id @default(uuid())
+  name          String
+  officialEntry String         // "07:00"
+  lateEntry     String         // "07:15"
+  cutoffEntry   String         // "07:30"
+  officialExit  String         // "14:00"
+  daysActive    String         @default("L,M,Mi,J,V")
+  periodId      String
+  period        AcademicPeriod @relation(fields: [periodId], references: [id])
+  isActive      Boolean        @default(true)
+
+  @@index([periodId])
+}
+
+model AcademicPeriod {
+  id        String           @id @default(uuid())
+  name      String
+  startDate DateTime
+  endDate   DateTime
+  isCurrent Boolean          @default(false)
+  schedules ScheduleConfig[]
+}
+
+model Admin {
+  id           String     @id @default(uuid())
+  username     String     @unique
+  passwordHash String
+  fullName     String
+  level        AdminLevel @default(ADMIN)
+  isActive     Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+}
