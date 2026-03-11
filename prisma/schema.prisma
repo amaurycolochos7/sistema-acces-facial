@@ -39,21 +39,22 @@ enum ExitCategory {
 }
 
 model User {
-  id             String           @id @default(uuid())
-  controlNumber  String           @unique
-  fullName       String
-  email          String
-  phone          String
-  tutorPhone     String?
-  photoUrl       String?
-  role           UserRole
-  careerId       String?
-  career         Career?          @relation(fields: [careerId], references: [id])
-  isActive       Boolean          @default(true)
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  faceDescriptors FaceDescriptor[]
-  accessLogs     AccessLog[]
+  id                String           @id @default(uuid())
+  controlNumber     String           @unique
+  fullName          String
+  email             String
+  phone             String
+  tutorPhone        String?
+  photoUrl          String?
+  role              UserRole
+  careerId          String?
+  career            Career?          @relation(fields: [careerId], references: [id])
+  isActive          Boolean          @default(true)
+  hasFaceRegistered Boolean          @default(false)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  faceDescriptors   FaceDescriptor[]
+  accessLogs        AccessLog[]
 
   @@index([controlNumber])
   @@index([role])
@@ -64,7 +65,8 @@ model FaceDescriptor {
   userId          String
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   descriptor      Unsupported("vector(128)")
-  descriptorIndex Int
+  descriptorIndex Int      @default(0)
+  photoUrl        String?
   createdAt       DateTime @default(now())
 
   @@index([userId])
