@@ -14,6 +14,7 @@ import {
   BarChart3,
   Settings,
   LogOut,
+  Monitor,
 } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 
@@ -72,6 +73,23 @@ export default function Sidebar() {
           );
         })}
       </nav>
+
+      {/* Kiosk Link */}
+      <div className="px-3 py-2 border-t border-white/10">
+        <a
+          href="/kiosk"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors w-full"
+          style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#6ee7b7' }}
+          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(16, 185, 129, 0.25)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(16, 185, 129, 0.15)'; }}
+        >
+          <Monitor className="w-[18px] h-[18px]" />
+          <span>Abrir Kiosco</span>
+          <span className="ml-auto text-[10px] opacity-60">↗</span>
+        </a>
+      </div>
 
       {/* Logout */}
       <div className="px-3 py-4 border-t border-white/10">
