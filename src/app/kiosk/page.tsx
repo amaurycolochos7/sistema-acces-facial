@@ -3,8 +3,9 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import {
   Camera, Wifi, WifiOff, LogIn, LogOut, CheckCircle, XCircle,
-  AlertTriangle, User, Clock, X, Loader2, ShieldCheck, ShieldAlert,
+  AlertTriangle, User, Clock, X, Loader2, ShieldCheck, ShieldAlert, CloudOff,
 } from 'lucide-react';
+import { saveOfflineLog, syncPendingLogs, getPendingCount } from '@/lib/offline-queue';
 
 interface MatchedUser {
   id: string;
@@ -55,7 +56,23 @@ export default function KioskPage() {
   const [resultMessage, setResultMessage] = useState('');
   const [resultType, setResultType] = useState<'entry' | 'exit' | 'late' | 'error'>('entry');
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [isOnline] = useState(true);
+  const [isOnline, setIsOnline] = useState(true);
+  const [pendingCount, setPendingCount] = useState(0);
+
+  // Online/Offline detection
+  useEffect(() => {
+    const goOnline = async () => {
+      setIsOnline(true);
+      const result = await syncPendingLogs();
+      if (result.synced > 0) setPendingCount(await getPendingCount());
+    };
+    const goOffline = () => setIsOnline(false);
+    setIsOnline(navigator.onLine);
+    getPendingCount().then(setPendingCount);
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
+    return () => { window.removeEventListener('online', goOnline); window.removeEventListener('offline', goOffline); };
+  }, []);
 
   // Clock
   useEffect(() => {
@@ -203,6 +220,7 @@ export default function KioskPage() {
     if (!matchedUser) return;
     setState('registering');
     try {
+      if (!navigator.onLine) throw new Error('offline');
       const res = await fetch('/api/access-logs/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -220,8 +238,11 @@ export default function KioskPage() {
         setState('success');
       }
     } catch {
-      setResultMessage('Error de conexión');
-      setResultType('error');
+      // Save offline
+      await saveOfflineLog({ userId: matchedUser.id, type: 'ENTRY', confidence });
+      setPendingCount(await getPendingCount());
+      setResultMessage(`Entrada guardada offline: ${matchedUser.fullName}`);
+      setResultType('entry');
       setState('success');
     }
   };
@@ -231,6 +252,7 @@ export default function KioskPage() {
     if (!matchedUser) return;
     setState('registering');
     try {
+      if (!navigator.onLine) throw new Error('offline');
       const res = await fetch('/api/access-logs/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -253,8 +275,10 @@ export default function KioskPage() {
         setState('success');
       }
     } catch {
-      setResultMessage('Error de conexión');
-      setResultType('error');
+      await saveOfflineLog({ userId: matchedUser.id, type: 'EXIT', confidence, exitReasonId: selectedReason || undefined, exitNote: exitNote || undefined });
+      setPendingCount(await getPendingCount());
+      setResultMessage(`Salida guardada offline: ${matchedUser.fullName}`);
+      setResultType('exit');
       setState('success');
     }
   };
@@ -321,6 +345,12 @@ export default function KioskPage() {
             {isOnline ? <Wifi className="w-3.5 h-3.5" /> : <WifiOff className="w-3.5 h-3.5" />}
             {isOnline ? 'Online' : 'Offline'}
           </div>
+          {pendingCount > 0 && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-amber-500/20 text-amber-400">
+              <CloudOff className="w-3.5 h-3.5" />
+              {pendingCount} pendientes
+            </div>
+          )}
         </div>
       </header>
 
