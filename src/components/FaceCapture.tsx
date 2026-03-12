@@ -19,7 +19,7 @@ const STEPS: Record<CaptureStep, StepConfig> = {
     label: 'Frente',
     instruction: 'Mira directamente a la camara',
     shortInstruction: 'Mira al frente',
-    checkAngle: (yaw: number, pitch: number) => Math.abs(yaw) < 12 && Math.abs(pitch) < 12,
+    checkAngle: (yaw: number, pitch: number) => Math.abs(yaw) < 15 && Math.abs(pitch) < 15,
     arcStart: -18,
     arcEnd: 18,
   },
@@ -27,7 +27,7 @@ const STEPS: Record<CaptureStep, StepConfig> = {
     label: 'Derecha',
     instruction: 'Gira lentamente tu cabeza a la derecha',
     shortInstruction: 'Gira a la derecha',
-    checkAngle: (yaw: number) => yaw < -18,
+    checkAngle: (yaw: number) => yaw > 15,
     arcStart: 18,
     arcEnd: 90,
   },
@@ -35,7 +35,7 @@ const STEPS: Record<CaptureStep, StepConfig> = {
     label: 'Abajo',
     instruction: 'Inclina lentamente tu cabeza hacia abajo',
     shortInstruction: 'Mira hacia abajo',
-    checkAngle: (_yaw: number, pitch: number) => pitch > 12,
+    checkAngle: (_yaw: number, pitch: number) => pitch < -10,
     arcStart: 90,
     arcEnd: 162,
   },
@@ -43,7 +43,7 @@ const STEPS: Record<CaptureStep, StepConfig> = {
     label: 'Izquierda',
     instruction: 'Gira lentamente tu cabeza a la izquierda',
     shortInstruction: 'Gira a la izquierda',
-    checkAngle: (yaw: number) => yaw > 18,
+    checkAngle: (yaw: number) => yaw < -15,
     arcStart: 162,
     arcEnd: 234,
   },
@@ -51,14 +51,40 @@ const STEPS: Record<CaptureStep, StepConfig> = {
     label: 'Arriba',
     instruction: 'Inclina lentamente tu cabeza hacia arriba',
     shortInstruction: 'Mira hacia arriba',
-    checkAngle: (_yaw: number, pitch: number) => pitch < -12,
+    checkAngle: (_yaw: number, pitch: number) => pitch > 10,
     arcStart: 234,
     arcEnd: 342,
   },
 };
 
 const STEP_ORDER: CaptureStep[] = ['front', 'right', 'down', 'left', 'up'];
-const HOLD_DURATION = 1500;
+const HOLD_DURATION = 1200;
+
+// Lightweight config for enrollment — only loads detector, mesh, and description
+// Skips iris, antispoof, liveness, gesture to reduce load time from ~60s to ~15s
+const ENROLL_CONFIG = {
+  modelBasePath: 'https://cdn.jsdelivr.net/npm/@vladmandic/human/models/',
+  backend: 'webgl' as const,
+  async: true,
+  warmup: 'face' as const,
+  cacheSensitivity: 0.75,
+  filter: { enabled: true, equalization: true, flip: false },
+  face: {
+    enabled: true,
+    detector: { enabled: true, rotation: true, maxDetected: 1, minConfidence: 0.5, modelPath: 'blazeface-back.json' },
+    mesh: { enabled: true, modelPath: 'facemesh.json' },
+    iris: { enabled: false },
+    description: { enabled: true, modelPath: 'faceres.json', minConfidence: 0.1 },
+    emotion: { enabled: false },
+    antispoof: { enabled: false },
+    liveness: { enabled: false },
+  },
+  body: { enabled: false },
+  hand: { enabled: false },
+  object: { enabled: false },
+  gesture: { enabled: false },
+  segmentation: { enabled: false },
+};
 
 interface FaceCaptureProps {
   onDescriptorsReady: (descriptors: number[][]) => void;
@@ -106,8 +132,7 @@ export default function FaceCapture({ onDescriptorsReady }: FaceCaptureProps) {
     const init = async () => {
       try {
         const H = (await import('@vladmandic/human')).default;
-        const { humanConfig } = await import('@/lib/human-config');
-        const human = new H(humanConfig as ConstructorParameters<typeof H>[0]);
+        const human = new H(ENROLL_CONFIG as ConstructorParameters<typeof H>[0]);
         await human.load();
         await human.warmup();
         if (mounted) {
