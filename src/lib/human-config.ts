@@ -15,7 +15,7 @@ export const humanConfig: Partial<H['config']> = {
     enabled: true,
     detector: {
       enabled: true,
-      rotation: false,
+      rotation: true,
       maxDetected: 1,
       minConfidence: 0.5,
       modelPath: 'blazeface-back.json',

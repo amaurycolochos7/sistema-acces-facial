@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Search, Filter, Edit2, Trash2, UserPlus, GraduationCap, X, Camera } from 'lucide-react';
+import { Plus, Search, Filter, Edit2, Trash2, UserPlus, GraduationCap, Briefcase, X, Camera, CheckCircle, XCircle } from 'lucide-react';
 import Link from 'next/link';
 
 interface Career {
@@ -182,7 +182,7 @@ export default function UsersPage() {
                     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
                       user.role === 'STUDENT' ? 'bg-blue-50 text-blue-700' : 'bg-purple-50 text-purple-700'
                     }`}>
-                      {user.role === 'STUDENT' ? '🎓 Alumno' : '👨‍🏫 Maestro'}
+                      {user.role === 'STUDENT' ? <><GraduationCap className="w-3 h-3" /> Alumno</> : <><Briefcase className="w-3 h-3" /> Maestro</>}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-gray-600">{user.career?.code || '—'}</td>
@@ -190,7 +190,7 @@ export default function UsersPage() {
                     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
                       user.hasFaceRegistered ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'
                     }`}>
-                      {user.hasFaceRegistered ? '✅ Sí' : '❌ No'}
+                      {user.hasFaceRegistered ? <><CheckCircle className="w-3 h-3" /> Si</> : <><XCircle className="w-3 h-3" /> No</>}
                     </span>
                   </td>
                   <td className="px-4 py-3">

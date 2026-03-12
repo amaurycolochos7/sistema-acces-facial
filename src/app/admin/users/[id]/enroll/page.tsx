@@ -123,11 +123,11 @@ export default function EnrollFacePage({ params }: { params: Promise<{ id: strin
           </h2>
         </div>
         <p className="text-sm text-gray-500 mb-6">
-          Se capturarán 3 fotos desde diferentes ángulos para crear un perfil facial preciso.
+          Se capturaran 5 angulos de tu rostro para crear un perfil facial preciso.
           {user.hasFaceRegistered && ' Los descriptores anteriores serán reemplazados.'}
         </p>
 
-        <FaceCapture onDescriptorsReady={handleDescriptorsReady} requiredCaptures={3} />
+        <FaceCapture onDescriptorsReady={handleDescriptorsReady} requiredCaptures={5} />
       </div>
     </div>
   );

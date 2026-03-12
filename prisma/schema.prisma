@@ -94,7 +94,7 @@ model ExitReason {
   id        String       @id @default(uuid())
   name      String
   category  ExitCategory
-  icon      String       @default("🏠")
+  icon      String       @default("home")
   sortOrder Int          @default(0)
   isDefault Boolean      @default(false)
   isActive  Boolean      @default(true)

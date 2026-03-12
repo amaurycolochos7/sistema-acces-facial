@@ -4,7 +4,7 @@ import { hash } from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Seeding database...');
+  console.log('[SEED] Seeding database...');
 
   // Create default admin
   const adminPassword = await hash('admin123', 12);
@@ -18,7 +18,7 @@ async function main() {
       level: 'SUPER_ADMIN',
     },
   });
-  console.log('✅ Admin created (admin / admin123)');
+  console.log('[OK] Admin created (admin / admin123)');
 
   // Create academic period
   const period = await prisma.academicPeriod.create({
@@ -29,7 +29,7 @@ async function main() {
       isCurrent: true,
     },
   });
-  console.log('✅ Academic period created');
+  console.log('[OK] Academic period created');
 
   // Create schedule config
   await prisma.scheduleConfig.create({
@@ -44,7 +44,7 @@ async function main() {
       isActive: true,
     },
   });
-  console.log('✅ Schedule config created');
+  console.log('[OK] Schedule config created');
 
   // Create careers
   const careers = [
@@ -61,23 +61,23 @@ async function main() {
       create: career,
     });
   }
-  console.log('✅ Careers created');
+  console.log('[OK] Careers created');
 
   // Create exit reasons
   const exitReasons = [
-    { name: 'Fin de jornada / Salida definitiva', category: 'DEFINITIVE' as const, icon: '🏠', sortOrder: 1, isDefault: true },
-    { name: 'Salida temporal (Mandado / Comida)', category: 'TEMPORARY' as const, icon: '🔄', sortOrder: 2 },
-    { name: 'Cita médica', category: 'MEDICAL' as const, icon: '🏥', sortOrder: 3 },
-    { name: 'Permiso administrativo', category: 'ADMINISTRATIVE' as const, icon: '📋', sortOrder: 4 },
-    { name: 'Evento institucional', category: 'ADMINISTRATIVE' as const, icon: '🎓', sortOrder: 5 },
-    { name: 'Emergencia personal', category: 'TEMPORARY' as const, icon: '🚨', sortOrder: 6 },
+    { name: 'Fin de jornada / Salida definitiva', category: 'DEFINITIVE' as const, icon: 'home', sortOrder: 1, isDefault: true },
+    { name: 'Salida temporal (Mandado / Comida)', category: 'TEMPORARY' as const, icon: 'refresh-cw', sortOrder: 2 },
+    { name: 'Cita médica', category: 'MEDICAL' as const, icon: 'hospital', sortOrder: 3 },
+    { name: 'Permiso administrativo', category: 'ADMINISTRATIVE' as const, icon: 'clipboard', sortOrder: 4 },
+    { name: 'Evento institucional', category: 'ADMINISTRATIVE' as const, icon: 'graduation-cap', sortOrder: 5 },
+    { name: 'Emergencia personal', category: 'TEMPORARY' as const, icon: 'siren', sortOrder: 6 },
   ];
   for (const reason of exitReasons) {
     await prisma.exitReason.create({ data: reason });
   }
-  console.log('✅ Exit reasons created');
+  console.log('[OK] Exit reasons created');
 
-  console.log('🎉 Seed completed!');
+  console.log('[SEED] Seed completed!');
 }
 
 main()

@@ -4,7 +4,18 @@ import { useRef, useState, useEffect, useCallback } from 'react';
 import {
   Camera, Wifi, WifiOff, LogIn, LogOut, CheckCircle, XCircle,
   AlertTriangle, User, Clock, X, Loader2, ShieldCheck, ShieldAlert, CloudOff,
+  GraduationCap, Briefcase, Home, RefreshCw, Hospital, ClipboardList, AlertCircle, Siren,
 } from 'lucide-react';
+
+const LUCIDE_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+  home: Home,
+  'refresh-cw': RefreshCw,
+  hospital: Hospital,
+  clipboard: ClipboardList,
+  'graduation-cap': GraduationCap,
+  'alert-circle': AlertCircle,
+  siren: Siren,
+};
 import { saveOfflineLog, syncPendingLogs, getPendingCount } from '@/lib/offline-queue';
 
 interface MatchedUser {
@@ -444,7 +455,7 @@ export default function KioskClient() {
                 <div className="bg-white/5 rounded-lg px-3 py-2">
                   <p className="text-white/40 text-xs">Rol</p>
                   <p className="text-white text-sm font-medium">
-                    {matchedUser.role === 'STUDENT' ? '🎓 Alumno' : '👨‍🏫 Maestro'}
+                    {matchedUser.role === 'STUDENT' ? <><GraduationCap className="w-3.5 h-3.5 inline-block mr-1" />Alumno</> : <><Briefcase className="w-3.5 h-3.5 inline-block mr-1" />Maestro</>}
                   </p>
                 </div>
                 <div className="bg-white/5 rounded-lg px-3 py-2">
@@ -494,7 +505,7 @@ export default function KioskClient() {
                         ? 'bg-blue-500/30 border border-blue-400/50'
                         : 'bg-white/5 hover:bg-white/10 border border-transparent'
                     }`}>
-                    <span className="text-lg">{reason.icon}</span>
+                    <span className="text-lg">{(() => { const Icon = LUCIDE_ICON_MAP[reason.icon]; return Icon ? <Icon className="w-5 h-5" /> : <ClipboardList className="w-5 h-5" />; })()}</span>
                     <span className="text-white text-sm font-medium">{reason.name}</span>
                   </button>
                 ))}

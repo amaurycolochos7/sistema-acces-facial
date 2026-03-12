@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
   }
 
   const reason = await prisma.exitReason.create({
-    data: { name, category, icon: icon || '📋', sortOrder: sortOrder || 0, isDefault: isDefault || false },
+    data: { name, category, icon: icon || 'clipboard', sortOrder: sortOrder || 0, isDefault: isDefault || false },
   });
   return NextResponse.json(reason, { status: 201 });
 }
