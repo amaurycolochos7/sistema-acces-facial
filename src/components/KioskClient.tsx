@@ -463,12 +463,7 @@ export default function KioskClient() {
                   <p className="text-white text-sm font-medium">{matchedUser.careerCode || '—'}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full bg-green-500 rounded-full" style={{ width: `${confidence * 100}%` }} />
-                </div>
-                <span className="text-green-400 text-xs font-bold">{(confidence * 100).toFixed(0)}%</span>
-              </div>
+
             </div>
           )}
 
