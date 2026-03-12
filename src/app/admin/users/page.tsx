@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Search, Filter, Edit2, Trash2, UserPlus, GraduationCap, Briefcase, X, Camera, CheckCircle, XCircle } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, UserPlus, GraduationCap, Briefcase, X, Camera, CheckCircle, XCircle, Users, ScanFace, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 
 interface Career {
@@ -50,26 +50,43 @@ export default function UsersPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
+  const [faceFilter, setFaceFilter] = useState(''); // '', 'yes', 'no'
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<UserFormData>(emptyForm);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({ total: 0, withFace: 0, withoutFace: 0 });
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page), limit: '15' });
     if (search) params.set('search', search);
     if (roleFilter) params.set('role', roleFilter);
+    if (faceFilter) params.set('face', faceFilter);
     const res = await fetch(`/api/users?${params}`);
     const data = await res.json();
     setUsers(data.users);
     setTotal(data.total);
     setLoading(false);
-  }, [page, search, roleFilter]);
+  }, [page, search, roleFilter, faceFilter]);
+
+  const fetchStats = useCallback(async () => {
+    try {
+      const res = await fetch('/api/users/stats');
+      if (res.ok) {
+        const data = await res.json();
+        setStats(data);
+      }
+    } catch { /* ignore */ }
+  }, []);
 
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
 
   useEffect(() => {
     fetch('/api/careers').then(r => r.json()).then(setCareers);
@@ -89,6 +106,7 @@ export default function UsersPage() {
       setEditingId(null);
       setForm(emptyForm);
       fetchUsers();
+      fetchStats();
     }
   };
 
@@ -107,10 +125,13 @@ export default function UsersPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('¿Desactivar este usuario?')) return;
+    if (!confirm('Desactivar este usuario?')) return;
     await fetch(`/api/users/${id}`, { method: 'DELETE' });
     fetchUsers();
+    fetchStats();
   };
+
+  const pctRegistered = stats.total > 0 ? Math.round((stats.withFace / stats.total) * 100) : 0;
 
   return (
     <div>
@@ -127,6 +148,62 @@ export default function UsersPage() {
         >
           <UserPlus className="w-4 h-4" />
           Nuevo Usuario
+        </button>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <button
+          onClick={() => { setFaceFilter(''); setPage(1); }}
+          className={`bg-white rounded-xl border p-4 text-left transition-all hover:shadow-md ${faceFilter === '' ? 'border-blue-300 ring-2 ring-blue-100' : 'border-gray-200'}`}
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+              <Users className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+              <p className="text-xs text-gray-500">Total de usuarios</p>
+            </div>
+          </div>
+        </button>
+
+        <button
+          onClick={() => { setFaceFilter('yes'); setPage(1); }}
+          className={`bg-white rounded-xl border p-4 text-left transition-all hover:shadow-md ${faceFilter === 'yes' ? 'border-green-300 ring-2 ring-green-100' : 'border-gray-200'}`}
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center">
+              <ScanFace className="w-5 h-5 text-green-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-green-700">{stats.withFace}</p>
+              <p className="text-xs text-gray-500">Con registro facial</p>
+            </div>
+          </div>
+          {stats.total > 0 && (
+            <div className="mt-3">
+              <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-full bg-green-500 rounded-full transition-all" style={{ width: `${pctRegistered}%` }} />
+              </div>
+              <p className="text-xs text-green-600 mt-1 font-medium">{pctRegistered}%</p>
+            </div>
+          )}
+        </button>
+
+        <button
+          onClick={() => { setFaceFilter('no'); setPage(1); }}
+          className={`bg-white rounded-xl border p-4 text-left transition-all hover:shadow-md ${faceFilter === 'no' ? 'border-amber-300 ring-2 ring-amber-100' : 'border-gray-200'}`}
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center">
+              <AlertTriangle className="w-5 h-5 text-amber-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-amber-700">{stats.withoutFace}</p>
+              <p className="text-xs text-gray-500">Sin registro facial</p>
+            </div>
+          </div>
         </button>
       </div>
 
@@ -158,25 +235,38 @@ export default function UsersPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-100 bg-gray-50">
-              <th className="text-left px-4 py-3 text-gray-500 font-medium">Núm. Control</th>
-              <th className="text-left px-4 py-3 text-gray-500 font-medium">Nombre</th>
+              <th className="text-left px-4 py-3 text-gray-500 font-medium">Usuario</th>
               <th className="text-left px-4 py-3 text-gray-500 font-medium">Correo</th>
               <th className="text-left px-4 py-3 text-gray-500 font-medium">Rol</th>
               <th className="text-left px-4 py-3 text-gray-500 font-medium">Carrera</th>
-              <th className="text-left px-4 py-3 text-gray-500 font-medium">Rostro</th>
+              <th className="text-left px-4 py-3 text-gray-500 font-medium">Registro Facial</th>
               <th className="text-right px-4 py-3 text-gray-500 font-medium">Acciones</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={7} className="py-12 text-center text-gray-400">Cargando...</td></tr>
+              <tr><td colSpan={6} className="py-12 text-center text-gray-400">Cargando...</td></tr>
             ) : users.length === 0 ? (
-              <tr><td colSpan={7} className="py-12 text-center text-gray-400">No hay usuarios registrados</td></tr>
+              <tr><td colSpan={6} className="py-12 text-center text-gray-400">No hay usuarios registrados</td></tr>
             ) : (
               users.map((user) => (
-                <tr key={user.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3 font-mono text-xs text-gray-600">{user.controlNumber}</td>
-                  <td className="px-4 py-3 font-medium text-gray-900">{user.fullName}</td>
+                <tr key={user.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                  {/* User info combined */}
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold ${
+                        user.hasFaceRegistered 
+                          ? 'bg-green-100 text-green-700' 
+                          : 'bg-gray-100 text-gray-500'
+                      }`}>
+                        {user.fullName.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900 leading-tight">{user.fullName}</p>
+                        <p className="text-xs text-gray-400 font-mono">{user.controlNumber}</p>
+                      </div>
+                    </div>
+                  </td>
                   <td className="px-4 py-3 text-gray-600">{user.email}</td>
                   <td className="px-4 py-3">
                     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
@@ -187,11 +277,16 @@ export default function UsersPage() {
                   </td>
                   <td className="px-4 py-3 text-gray-600">{user.career?.code || '—'}</td>
                   <td className="px-4 py-3">
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                      user.hasFaceRegistered ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'
-                    }`}>
-                      {user.hasFaceRegistered ? <><CheckCircle className="w-3 h-3" /> Si</> : <><XCircle className="w-3 h-3" /> No</>}
-                    </span>
+                    {user.hasFaceRegistered ? (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-200">
+                        <CheckCircle className="w-3.5 h-3.5" /> Registrado
+                      </span>
+                    ) : (
+                      <Link href={`/admin/users/${user.id}/enroll`}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-colors cursor-pointer">
+                        <Camera className="w-3.5 h-3.5" /> Pendiente - Registrar
+                      </Link>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">
@@ -253,7 +348,7 @@ export default function UsersPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Núm. Control / ID</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Num. Control / ID</label>
                   <input type="text" value={form.controlNumber} onChange={(e) => setForm({ ...form, controlNumber: e.target.value })}
                     className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
                     required />
@@ -276,7 +371,7 @@ export default function UsersPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Telefono</label>
                   <input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })}
                     className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
                     required />

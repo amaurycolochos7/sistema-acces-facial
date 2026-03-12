@@ -8,6 +8,7 @@ export async function GET(req: NextRequest) {
   const search = searchParams.get('search') || '';
   const role = searchParams.get('role') || '';
   const careerId = searchParams.get('careerId') || '';
+  const face = searchParams.get('face') || '';
 
   const where: Record<string, unknown> = {};
   if (search) {
@@ -19,6 +20,8 @@ export async function GET(req: NextRequest) {
   }
   if (role) where.role = role;
   if (careerId) where.careerId = careerId;
+  if (face === 'yes') where.hasFaceRegistered = true;
+  if (face === 'no') where.hasFaceRegistered = false;
 
   const [users, total] = await Promise.all([
     prisma.user.findMany({
