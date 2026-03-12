@@ -296,484 +296,319 @@ export default function FaceCapture({ onDescriptorsReady }: FaceCaptureProps) {
   useEffect(() => {
     return () => { stopCamera(); };
   }, [stopCamera]);
-
-  // SVG dimensions for the face guide overlay
-  const svgW = 320;
-  const svgH = 400;
+  const svgW = 280;
+  const svgH = 360;
   const cx = svgW / 2;
   const cy = svgH / 2;
-  const rx = 110;
-  const ry = 145;
+  const rx = 95;
+  const ry = 130;
 
   return (
-    <div className="face-capture-container">
+    <div className="fc-root">
       <style>{`
-        .face-capture-container {
+        .fc-root {
           display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 10px;
-          max-width: 280px;
-          margin: 0 auto;
-        }
-        .fc-camera-wrapper {
-          position: relative;
+          gap: 24px;
+          align-items: stretch;
           width: 100%;
-          aspect-ratio: 1/1;
-          background: #0a0a0a;
+        }
+
+        /* LEFT: Camera panel */
+        .fc-camera-panel {
+          flex: 0 0 320px;
+          position: relative;
+          background: #0f0f0f;
           border-radius: 16px;
           overflow: hidden;
-          box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+          aspect-ratio: 3/4;
         }
-        .fc-camera-wrapper video {
+        .fc-camera-panel video {
           width: 100%;
           height: 100%;
           object-fit: cover;
           transform: scaleX(-1);
         }
-        .fc-camera-wrapper canvas {
+        .fc-camera-panel canvas {
           position: absolute;
           inset: 0;
           width: 100%;
           height: 100%;
           transform: scaleX(-1);
           pointer-events: none;
+          z-index: 1;
         }
-        .fc-overlay {
+        .fc-guide-overlay {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          pointer-events: none;
+          z-index: 2;
+        }
+        .fc-guide-svg {
+          width: 85%;
+          max-width: 280px;
+          height: auto;
+        }
+        .fc-segment-bg { fill: none; stroke: rgba(255,255,255,0.1); stroke-width: 3.5; stroke-linecap: round; }
+        .fc-segment-done { fill: none; stroke: #22C55E; stroke-width: 4; stroke-linecap: round; filter: drop-shadow(0 0 4px rgba(34,197,94,0.4)); }
+        .fc-segment-active { fill: none; stroke-width: 4; stroke-linecap: round; }
+        .fc-segment-active.ok { stroke: #22C55E; filter: drop-shadow(0 0 6px rgba(34,197,94,0.5)); }
+        .fc-segment-active.search { stroke: #3B82F6; filter: drop-shadow(0 0 4px rgba(59,130,246,0.3)); animation: fc-pulse 1.5s ease-in-out infinite; }
+        .fc-segment-inactive { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 3; stroke-linecap: round; }
+        .fc-face-outline { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 1.5; }
+        .fc-hold-ring { fill: none; stroke: #22C55E; stroke-width: 3; stroke-linecap: round; }
+        @keyframes fc-pulse { 0%,100%{opacity:0.7} 50%{opacity:1} }
+        @keyframes spin { to{transform:rotate(360deg)} }
+
+        .fc-loading-cover {
           position: absolute;
           inset: 0;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          pointer-events: none;
+          background: #0f0f0f;
+          z-index: 10;
         }
-        .fc-guide-svg {
-          width: 80%;
-          max-width: 320px;
-          height: auto;
-          filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.15));
-        }
-        .fc-segment-bg {
-          fill: none;
-          stroke: rgba(255,255,255,0.12);
-          stroke-width: 4;
-          stroke-linecap: round;
-        }
-        .fc-segment-completed {
-          fill: none;
-          stroke: #22C55E;
-          stroke-width: 4.5;
-          stroke-linecap: round;
-          filter: drop-shadow(0 0 6px rgba(34,197,94,0.5));
-          transition: stroke 0.4s, filter 0.4s;
-        }
-        .fc-segment-active {
-          fill: none;
-          stroke-width: 4.5;
-          stroke-linecap: round;
-          transition: stroke 0.3s;
-        }
-        .fc-segment-active.correct {
-          stroke: #22C55E;
-          filter: drop-shadow(0 0 8px rgba(34,197,94,0.6));
-        }
-        .fc-segment-active.searching {
-          stroke: #3B82F6;
-          filter: drop-shadow(0 0 6px rgba(59,130,246,0.4));
-          animation: fc-pulse-blue 1.5s ease-in-out infinite;
-        }
-        .fc-segment-inactive {
-          fill: none;
-          stroke: rgba(255,255,255,0.08);
-          stroke-width: 3;
-          stroke-linecap: round;
-        }
-        .fc-face-outline {
-          fill: none;
-          stroke: rgba(255,255,255,0.06);
-          stroke-width: 1;
-        }
-        .fc-hold-ring {
-          fill: none;
-          stroke: #22C55E;
-          stroke-width: 5;
-          stroke-linecap: round;
-          filter: drop-shadow(0 0 10px rgba(34,197,94,0.5));
-          transition: stroke-dasharray 0.1s linear;
-        }
-        @keyframes fc-pulse-blue {
-          0%, 100% { opacity: 0.7; }
-          50% { opacity: 1; }
-        }
-        @keyframes fc-pulse-green {
-          0%, 100% { filter: drop-shadow(0 0 10px rgba(34,197,94,0.3)); }
-          50% { filter: drop-shadow(0 0 25px rgba(34,197,94,0.7)); }
-        }
-        .fc-flash {
+        .fc-loading-cover p { color: #888; font-size: 13px; margin-top: 12px; }
+        .fc-done-cover {
           position: absolute;
           inset: 0;
-          background: rgba(34, 197, 94, 0.15);
-          border-radius: 24px;
-          animation: fc-flash-anim 0.7s ease-out forwards;
-          pointer-events: none;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          background: rgba(10,10,10,0.9);
+          backdrop-filter: blur(6px);
+          z-index: 10;
+          animation: fc-fadein 0.3s ease;
         }
-        @keyframes fc-flash-anim {
-          0% { opacity: 1; }
-          100% { opacity: 0; }
+        @keyframes fc-fadein { from{opacity:0;transform:scale(0.96)} to{opacity:1;transform:scale(1)} }
+        .fc-done-cover h3 { color: #fff; font-size: 18px; font-weight: 700; margin: 12px 0 4px; }
+        .fc-done-cover p { color: #999; font-size: 13px; margin: 0; }
+        .fc-flash { position: absolute; inset: 0; background: white; animation: fc-flash-anim 0.5s ease-out forwards; z-index: 15; pointer-events: none; }
+        @keyframes fc-flash-anim { 0%{opacity:0.8} 100%{opacity:0} }
+        .fc-debug-badge {
+          position: absolute; top: 8px; right: 8px;
+          padding: 3px 8px; border-radius: 6px;
+          background: rgba(0,0,0,0.65); font-size: 10px;
+          font-family: monospace; color: rgba(255,255,255,0.6);
+          z-index: 5; pointer-events: none;
         }
-        .fc-instruction-bar {
-          position: absolute;
-          bottom: 16px;
-          left: 16px;
-          right: 16px;
+
+        /* RIGHT: Info panel */
+        .fc-info-panel {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          min-width: 0;
+        }
+
+        /* Current instruction card */
+        .fc-instruction-card {
+          padding: 16px 20px;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          transition: all 0.3s;
+        }
+        .fc-instruction-card.search { background: #EFF6FF; border: 1px solid #BFDBFE; }
+        .fc-instruction-card.ok { background: #F0FDF4; border: 1px solid #BBF7D0; }
+        .fc-instruction-card.noface { background: #FEF2F2; border: 1px solid #FECACA; }
+        .fc-instruction-card.done { background: #F0FDF4; border: 1px solid #BBF7D0; }
+
+        .fc-instr-icon {
+          width: 44px; height: 44px; border-radius: 12px;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 20px; font-weight: 700; flex-shrink: 0;
+        }
+        .fc-instr-icon.search { background: #DBEAFE; color: #2563EB; }
+        .fc-instr-icon.ok { background: #DCFCE7; color: #16A34A; }
+        .fc-instr-icon.noface { background: #FEE2E2; color: #DC2626; }
+        .fc-instr-icon.done { background: #DCFCE7; color: #16A34A; }
+
+        .fc-instr-text h4 { margin: 0; font-size: 15px; font-weight: 600; color: #111827; }
+        .fc-instr-text p { margin: 2px 0 0; font-size: 13px; color: #6B7280; }
+
+        /* Hold progress bar */
+        .fc-hold-bar { width: 100%; height: 6px; background: #E5E7EB; border-radius: 3px; overflow: hidden; }
+        .fc-hold-fill { height: 100%; background: linear-gradient(90deg, #22C55E, #16A34A); transition: width 0.1s linear; border-radius: 3px; }
+
+        /* Steps list */
+        .fc-steps-list {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+        .fc-step-item {
           display: flex;
           align-items: center;
           gap: 12px;
-          padding: 14px 18px;
-          border-radius: 16px;
-          backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
-          transition: background 0.3s, border-color 0.3s;
-        }
-        .fc-instruction-bar.correct {
-          background: rgba(34, 197, 94, 0.15);
-          border: 1px solid rgba(34, 197, 94, 0.3);
-        }
-        .fc-instruction-bar.searching {
-          background: rgba(0,0,0,0.5);
-          border: 1px solid rgba(255,255,255,0.1);
-        }
-        .fc-instruction-bar.no-face {
-          background: rgba(0,0,0,0.6);
-          border: 1px solid rgba(255,255,255,0.08);
-        }
-        .fc-instruction-icon {
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-          font-size: 16px;
-          transition: background 0.3s;
-        }
-        .fc-instruction-icon.correct { background: rgba(34,197,94,0.3); }
-        .fc-instruction-icon.searching { background: rgba(59,130,246,0.2); }
-        .fc-instruction-icon.no-face { background: rgba(255,255,255,0.08); }
-        .fc-instruction-text h4 {
-          margin: 0;
-          font-size: 14px;
-          font-weight: 600;
-          color: white;
-        }
-        .fc-instruction-text p {
-          margin: 2px 0 0;
-          font-size: 12px;
-          color: rgba(255,255,255,0.5);
-        }
-        .fc-no-face-indicator {
-          position: absolute;
-          top: 16px;
-          left: 50%;
-          transform: translateX(-50%);
-          padding: 6px 16px;
-          border-radius: 20px;
-          background: rgba(239, 68, 68, 0.2);
-          border: 1px solid rgba(239, 68, 68, 0.3);
-          backdrop-filter: blur(8px);
-          -webkit-backdrop-filter: blur(8px);
-        }
-        .fc-no-face-indicator span {
-          font-size: 12px;
-          font-weight: 500;
-          color: #FCA5A5;
-        }
-        .fc-loading-overlay {
-          position: absolute;
-          inset: 0;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          background: #0a0a0a;
-          border-radius: 24px;
-        }
-        .fc-loading-overlay p {
-          color: rgba(255,255,255,0.5);
-          font-size: 13px;
-          margin-top: 12px;
-        }
-        .fc-done-overlay {
-          position: absolute;
-          inset: 0;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          background: rgba(10,10,10,0.85);
-          backdrop-filter: blur(8px);
-          -webkit-backdrop-filter: blur(8px);
-          border-radius: 24px;
-          animation: fc-fade-in 0.4s ease-out;
-        }
-        @keyframes fc-fade-in {
-          0% { opacity: 0; transform: scale(0.95); }
-          100% { opacity: 1; transform: scale(1); }
-        }
-        .fc-done-overlay h3 {
-          color: white;
-          font-size: 20px;
-          font-weight: 700;
-          margin: 16px 0 4px;
-        }
-        .fc-done-overlay p {
-          color: rgba(255,255,255,0.5);
-          font-size: 14px;
-          margin: 0;
-        }
-
-        /* Progress bar */
-        .fc-progress-section {
-          width: 100%;
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-        }
-        .fc-progress-bar-bg {
-          width: 100%;
-          height: 4px;
-          background: #E5E7EB;
-          border-radius: 2px;
-          overflow: hidden;
-        }
-        .fc-progress-bar-fill {
-          height: 100%;
-          background: linear-gradient(90deg, #3B82F6, #22C55E);
-          border-radius: 3px;
-          transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .fc-steps-row {
-          display: flex;
-          gap: 6px;
-        }
-        .fc-step-chip {
-          flex: 1;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 3px;
-          padding: 4px 2px;
-          border-radius: 6px;
-          font-size: 10px;
-          font-weight: 500;
+          padding: 10px 14px;
+          border-radius: 10px;
           transition: all 0.3s;
-          border: 1px solid transparent;
+          font-size: 14px;
         }
-        .fc-step-chip.completed {
+        .fc-step-item.done {
           background: #F0FDF4;
-          color: #16A34A;
-          border-color: #BBF7D0;
+          color: #15803D;
+          font-weight: 500;
         }
-        .fc-step-chip.active {
+        .fc-step-item.active {
           background: #EFF6FF;
-          color: #2563EB;
-          border-color: #BFDBFE;
-          animation: fc-chip-pulse 2s ease-in-out infinite;
+          color: #1D4ED8;
+          font-weight: 600;
+          box-shadow: 0 0 0 2px #BFDBFE;
         }
-        .fc-step-chip.pending {
+        .fc-step-item.pending {
           background: #F9FAFB;
           color: #9CA3AF;
-          border-color: #F3F4F6;
         }
-        @keyframes fc-chip-pulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(59,130,246,0); }
-          50% { box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+        .fc-step-num {
+          width: 28px; height: 28px; border-radius: 50%;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 12px; font-weight: 700; flex-shrink: 0;
         }
+        .fc-step-item.done .fc-step-num { background: #DCFCE7; color: #16A34A; }
+        .fc-step-item.active .fc-step-num { background: #DBEAFE; color: #2563EB; }
+        .fc-step-item.pending .fc-step-num { background: #F3F4F6; color: #9CA3AF; }
 
-        /* Instruction message below */
-        .fc-message {
-          text-align: center;
-          font-size: 12px;
-          color: #6B7280;
-          min-height: 16px;
-        }
-        .fc-actions {
-          display: flex;
-          justify-content: center;
-        }
+        /* Progress bar */
+        .fc-progress-track { width: 100%; height: 4px; background: #E5E7EB; border-radius: 2px; overflow: hidden; }
+        .fc-progress-fill { height: 100%; background: linear-gradient(90deg, #3B82F6, #22C55E); transition: width 0.5s ease; border-radius: 2px; }
+
+        /* Reset button */
         .fc-reset-btn {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          padding: 8px 16px;
-          border-radius: 10px;
-          border: 1px solid #E5E7EB;
-          background: white;
-          font-size: 13px;
-          font-weight: 500;
-          color: #6B7280;
-          cursor: pointer;
-          transition: background 0.2s;
+          display: inline-flex; align-items: center; gap: 6px;
+          padding: 8px 16px; border-radius: 8px;
+          border: 1px solid #E5E7EB; background: #fff;
+          font-size: 13px; font-weight: 500; color: #6B7280;
+          cursor: pointer; transition: background 0.2s;
         }
-        .fc-reset-btn:hover { background: #F9FAFB; }
+        .fc-reset-btn:hover { background: #F3F4F6; }
       `}</style>
 
-      {/* Camera */}
-      <div className="fc-camera-wrapper">
+      {/* LEFT: Camera */}
+      <div className="fc-camera-panel">
         <video ref={videoRef} playsInline muted />
         <canvas ref={canvasRef} />
 
-        {/* Loading */}
         {(status === 'loading' || status === 'ready') && (
-          <div className="fc-loading-overlay">
-            <Loader2 style={{ width: 40, height: 40, color: '#3B82F6', animation: 'spin 1s linear infinite' }} />
-            <p>Cargando modelos de reconocimiento...</p>
+          <div className="fc-loading-cover">
+            <Loader2 style={{ width: 36, height: 36, color: '#3B82F6', animation: 'spin 1s linear infinite' }} />
+            <p>Cargando modelos...</p>
           </div>
         )}
 
-        {/* Face guide overlay */}
         {status === 'capturing' && (
-          <div className="fc-overlay">
-            <svg className="fc-guide-svg" viewBox={`0 0 ${svgW} ${svgH}`} xmlns="http://www.w3.org/2000/svg">
-              {/* Subtle face outline */}
-              <ellipse cx={cx} cy={cy} rx={rx - 8} ry={ry - 8} className="fc-face-outline" />
-
-              {/* Segments */}
+          <div className="fc-guide-overlay">
+            <svg className="fc-guide-svg" viewBox={`0 0 ${svgW} ${svgH}`}>
+              <ellipse cx={cx} cy={cy} rx={rx - 6} ry={ry - 6} className="fc-face-outline" />
               {STEP_ORDER.map((step, i) => {
                 const config = STEPS[step];
                 const isCompleted = completedSteps[i];
                 const isCurrent = i === currentStepIndex;
-                const gap = 3; // degrees gap between segments
+                const gap = 3;
                 const arcS = config.arcStart + gap / 2;
                 const arcE = config.arcEnd - gap / 2;
                 const path = describeArc(cx, cy, rx, ry, arcS, arcE);
-
-                if (isCompleted) {
-                  return <path key={step} d={path} className="fc-segment-completed" />;
-                }
-                if (isCurrent) {
-                  return (
-                    <path
-                      key={step}
-                      d={path}
-                      className={`fc-segment-active ${poseCorrect ? 'correct' : 'searching'}`}
-                    />
-                  );
-                }
+                if (isCompleted) return <path key={step} d={path} className="fc-segment-done" />;
+                if (isCurrent) return <path key={step} d={path} className={`fc-segment-active ${poseCorrect ? 'ok' : 'search'}`} />;
                 return <path key={step} d={path} className="fc-segment-inactive" />;
               })}
-
-              {/* Hold progress ring (inner) */}
               {poseCorrect && holdProgress > 0 && (
-                <ellipse
-                  cx={cx}
-                  cy={cy}
-                  rx={rx + 12}
-                  ry={ry + 12}
-                  className="fc-hold-ring"
-                  strokeDasharray={`${holdProgress * 2 * Math.PI * ((rx + ry + 24) / 2)} ${2 * Math.PI * ((rx + ry + 24) / 2)}`}
-                  style={{ animation: 'fc-pulse-green 1s ease-in-out infinite' }}
+                <ellipse cx={cx} cy={cy} rx={rx + 10} ry={ry + 10} className="fc-hold-ring"
+                  strokeDasharray={`${holdProgress * 2 * Math.PI * ((rx + ry + 20) / 2)} ${2 * Math.PI * ((rx + ry + 20) / 2)}`}
                 />
               )}
             </svg>
           </div>
         )}
 
-        {/* No face warning */}
-        {status === 'capturing' && !faceDetected && (
-          <div className="fc-no-face-indicator">
-            <span>Posiciona tu rostro en el ovalo</span>
-          </div>
-        )}
-
-        {/* Debug angle display */}
         {status === 'capturing' && faceDetected && (
-          <div style={{
-            position: 'absolute', top: 12, right: 12,
-            padding: '4px 10px', borderRadius: 8,
-            background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
-            fontSize: 11, fontFamily: 'monospace', color: 'rgba(255,255,255,0.7)',
-            pointerEvents: 'none', zIndex: 5,
-          }}>
-            Y:{debugAngles.yaw} P:{debugAngles.pitch}
-          </div>
+          <div className="fc-debug-badge">Y:{debugAngles.yaw} P:{debugAngles.pitch}</div>
         )}
 
-        {/* Instruction bar */}
-        {status === 'capturing' && (
-          <div className={`fc-instruction-bar ${!faceDetected ? 'no-face' : poseCorrect ? 'correct' : 'searching'}`}>
-            <div className={`fc-instruction-icon ${!faceDetected ? 'no-face' : poseCorrect ? 'correct' : 'searching'}`}>
-              {getStepEmoji(currentStep)}
-            </div>
-            <div className="fc-instruction-text">
-              <h4>{!faceDetected ? 'Buscando rostro...' : stepConfig.shortInstruction}</h4>
-              <p>
-                {!faceDetected
-                  ? 'Centra tu rostro en el ovalo'
-                  : poseCorrect
-                    ? 'Manten la posicion...'
-                    : `Paso ${currentStepIndex + 1} de ${STEP_ORDER.length}`}
-              </p>
-            </div>
-            {poseCorrect && holdProgress > 0 && (
-              <div style={{ width: 36, height: 36, position: 'relative', flexShrink: 0 }}>
-                <svg viewBox="0 0 36 36" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
-                  <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="3" />
-                  <circle
-                    cx="18" cy="18" r="15" fill="none" stroke="#22C55E" strokeWidth="3" strokeLinecap="round"
-                    strokeDasharray={`${holdProgress * 94.2} 94.2`}
-                    style={{ transition: 'stroke-dasharray 0.1s linear' }}
-                  />
-                </svg>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Flash on capture */}
         {justCaptured && <div className="fc-flash" />}
 
-        {/* Done overlay */}
         {status === 'done' && (
-          <div className="fc-done-overlay">
-            <CheckCircle style={{ width: 56, height: 56, color: '#22C55E' }} />
-            <h3>Registro completado</h3>
-            <p>{STEP_ORDER.length} angulos capturados correctamente</p>
+          <div className="fc-done-cover">
+            <CheckCircle style={{ width: 48, height: 48, color: '#22C55E' }} />
+            <h3>Completado</h3>
+            <p>{STEP_ORDER.length} angulos capturados</p>
           </div>
         )}
       </div>
 
-      {/* Progress section */}
-      <div className="fc-progress-section">
-        <div className="fc-progress-bar-bg">
-          <div className="fc-progress-bar-fill" style={{ width: `${globalProgress * 100}%` }} />
+      {/* RIGHT: Info panel */}
+      <div className="fc-info-panel">
+        {/* Current instruction */}
+        <div className={`fc-instruction-card ${status === 'done' ? 'done' : !faceDetected ? 'noface' : poseCorrect ? 'ok' : 'search'}`}>
+          <div className={`fc-instr-icon ${status === 'done' ? 'done' : !faceDetected ? 'noface' : poseCorrect ? 'ok' : 'search'}`}>
+            {status === 'done' ? <CheckCircle style={{ width: 22, height: 22 }} /> : getStepEmoji(currentStep)}
+          </div>
+          <div className="fc-instr-text">
+            <h4>
+              {status === 'done'
+                ? 'Registro completado'
+                : !faceDetected
+                  ? 'Buscando rostro...'
+                  : stepConfig.shortInstruction}
+            </h4>
+            <p>
+              {status === 'done'
+                ? 'Todos los angulos fueron capturados'
+                : !faceDetected
+                  ? 'Centra tu rostro en el ovalo'
+                  : poseCorrect
+                    ? 'Manten la posicion...'
+                    : stepConfig.instruction}
+            </p>
+          </div>
         </div>
-        <div className="fc-steps-row">
+
+        {/* Hold progress */}
+        {poseCorrect && holdProgress > 0 && status === 'capturing' && (
+          <div className="fc-hold-bar">
+            <div className="fc-hold-fill" style={{ width: `${holdProgress * 100}%` }} />
+          </div>
+        )}
+
+        {/* Overall progress */}
+        <div className="fc-progress-track">
+          <div className="fc-progress-fill" style={{ width: `${globalProgress * 100}%` }} />
+        </div>
+
+        {/* Steps list */}
+        <div className="fc-steps-list">
           {STEP_ORDER.map((step, i) => {
             const config = STEPS[step];
             const isCompleted = completedSteps[i];
             const isCurrent = i === currentStepIndex && status === 'capturing';
             return (
-              <div key={step} className={`fc-step-chip ${isCompleted ? 'completed' : isCurrent ? 'active' : 'pending'}`}>
-                {isCompleted ? <CheckCircle style={{ width: 12, height: 12 }} /> : getStepEmoji(step)}
+              <div key={step} className={`fc-step-item ${isCompleted ? 'done' : isCurrent ? 'active' : 'pending'}`}>
+                <div className="fc-step-num">
+                  {isCompleted ? <CheckCircle style={{ width: 16, height: 16 }} /> : i + 1}
+                </div>
                 <span>{config.label}</span>
+                {isCurrent && <span style={{ marginLeft: 'auto', fontSize: 12, opacity: 0.6 }}>Actual</span>}
+                {isCompleted && <span style={{ marginLeft: 'auto', fontSize: 12, opacity: 0.6 }}>Listo</span>}
               </div>
             );
           })}
         </div>
-        <p className="fc-message">{message}</p>
-      </div>
 
-      {/* Actions */}
-      {(status === 'capturing' || status === 'done') && (
-        <div className="fc-actions">
+        {/* Reset */}
+        {(status === 'capturing' || status === 'done') && (
           <button onClick={reset} className="fc-reset-btn">
-            <RotateCcw style={{ width: 14, height: 14 }} /> Reiniciar
+            <RotateCcw style={{ width: 14, height: 14 }} /> Reiniciar captura
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
