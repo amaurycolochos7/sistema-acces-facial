@@ -121,6 +121,7 @@ export default function FaceCapture({ onDescriptorsReady }: FaceCaptureProps) {
   const [poseCorrect, setPoseCorrect] = useState(false);
   const [justCaptured, setJustCaptured] = useState(false);
   const [globalProgress, setGlobalProgress] = useState(0);
+  const [debugAngles, setDebugAngles] = useState({ yaw: 0, pitch: 0 });
 
   const currentStepIndex = capturedRef.current.length;
   const currentStep = STEP_ORDER[currentStepIndex] || 'front';
@@ -200,9 +201,12 @@ export default function FaceCapture({ onDescriptorsReady }: FaceCaptureProps) {
         }
       }
 
-      // Check head rotation
-      const yaw = face.rotation?.angle?.yaw ?? 0;
-      const pitch = face.rotation?.angle?.pitch ?? 0;
+      // Check head rotation — convert radians to degrees
+      const yawRad = face.rotation?.angle?.yaw ?? 0;
+      const pitchRad = face.rotation?.angle?.pitch ?? 0;
+      const yaw = yawRad * (180 / Math.PI);
+      const pitch = pitchRad * (180 / Math.PI);
+      setDebugAngles({ yaw: Math.round(yaw), pitch: Math.round(pitch) });
       const stepIdx = capturedRef.current.length;
 
       if (stepIdx < STEP_ORDER.length) {
@@ -681,6 +685,19 @@ export default function FaceCapture({ onDescriptorsReady }: FaceCaptureProps) {
         {status === 'capturing' && !faceDetected && (
           <div className="fc-no-face-indicator">
             <span>Posiciona tu rostro en el ovalo</span>
+          </div>
+        )}
+
+        {/* Debug angle display */}
+        {status === 'capturing' && faceDetected && (
+          <div style={{
+            position: 'absolute', top: 12, right: 12,
+            padding: '4px 10px', borderRadius: 8,
+            background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
+            fontSize: 11, fontFamily: 'monospace', color: 'rgba(255,255,255,0.7)',
+            pointerEvents: 'none', zIndex: 5,
+          }}>
+            Y:{debugAngles.yaw} P:{debugAngles.pitch}
           </div>
         )}
 
