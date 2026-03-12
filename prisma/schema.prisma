@@ -64,7 +64,7 @@ model FaceDescriptor {
   id              String   @id @default(uuid())
   userId          String
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  descriptor      Unsupported("vector(128)")
+  descriptor      Unsupported("vector(1024)")
   descriptorIndex Int      @default(0)
   photoUrl        String?
   createdAt       DateTime @default(now())

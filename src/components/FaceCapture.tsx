@@ -312,18 +312,18 @@ export default function FaceCapture({ onDescriptorsReady }: FaceCaptureProps) {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 16px;
-          max-width: 340px;
+          gap: 10px;
+          max-width: 280px;
           margin: 0 auto;
         }
         .fc-camera-wrapper {
           position: relative;
           width: 100%;
-          aspect-ratio: 4/5;
+          aspect-ratio: 1/1;
           background: #0a0a0a;
-          border-radius: 20px;
+          border-radius: 16px;
           overflow: hidden;
-          box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+          box-shadow: 0 8px 30px rgba(0,0,0,0.2);
         }
         .fc-camera-wrapper video {
           width: 100%;
@@ -449,14 +449,14 @@ export default function FaceCapture({ onDescriptorsReady }: FaceCaptureProps) {
           border: 1px solid rgba(255,255,255,0.08);
         }
         .fc-instruction-icon {
-          width: 40px;
-          height: 40px;
+          width: 32px;
+          height: 32px;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
-          font-size: 20px;
+          font-size: 16px;
           transition: background 0.3s;
         }
         .fc-instruction-icon.correct { background: rgba(34,197,94,0.3); }
@@ -539,13 +539,13 @@ export default function FaceCapture({ onDescriptorsReady }: FaceCaptureProps) {
           width: 100%;
           display: flex;
           flex-direction: column;
-          gap: 10px;
+          gap: 6px;
         }
         .fc-progress-bar-bg {
           width: 100%;
-          height: 6px;
+          height: 4px;
           background: #E5E7EB;
-          border-radius: 3px;
+          border-radius: 2px;
           overflow: hidden;
         }
         .fc-progress-bar-fill {
@@ -563,10 +563,10 @@ export default function FaceCapture({ onDescriptorsReady }: FaceCaptureProps) {
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 4px;
-          padding: 6px 4px;
-          border-radius: 8px;
-          font-size: 11px;
+          gap: 3px;
+          padding: 4px 2px;
+          border-radius: 6px;
+          font-size: 10px;
           font-weight: 500;
           transition: all 0.3s;
           border: 1px solid transparent;
@@ -595,9 +595,9 @@ export default function FaceCapture({ onDescriptorsReady }: FaceCaptureProps) {
         /* Instruction message below */
         .fc-message {
           text-align: center;
-          font-size: 14px;
+          font-size: 12px;
           color: #6B7280;
-          min-height: 20px;
+          min-height: 16px;
         }
         .fc-actions {
           display: flex;

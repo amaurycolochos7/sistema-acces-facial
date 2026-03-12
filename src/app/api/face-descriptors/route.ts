@@ -19,9 +19,9 @@ export async function POST(req: NextRequest) {
 
     // Validate descriptor dimensions
     for (let i = 0; i < descriptors.length; i++) {
-      if (!Array.isArray(descriptors[i]) || descriptors[i].length !== 128) {
+      if (!Array.isArray(descriptors[i]) || descriptors[i].length !== 1024) {
         return NextResponse.json({
-          error: `Descriptor ${i + 1} tiene dimension invalida: ${descriptors[i]?.length || 0} (esperado: 128)`,
+          error: `Descriptor ${i + 1} tiene dimension invalida: ${descriptors[i]?.length || 0} (esperado: 1024)`,
         }, { status: 400 });
       }
     }
